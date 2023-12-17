@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zhen Zhen 5</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body style="background-color: #f0f0f0; color: blue;">
+    <div class="header">
+        <h1 id="name">Amazon Reviews</h1>
+    </div>
+    <table id="data-table">
+        <thead>
+            <tr>
+                <th>Image</th>
+                <th>Score</th>
+                <th>City</th>
+                <th>Title</th>
+                <th>Review</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <script>
+        $.get('/api/mydata', function(data) {
+    var tableBody = $('#data-table tbody');
+    data.forEach(function(item) {
+        var row = '<tr>';
+        row += '<td><img src="../static/score-' + item.score + '.jpg" alt="score image" width="50px"></td>';
+        row += '<td>' + item.score + '</td>';
+        row += '<td><a href="/city/' + encodeURIComponent(item.city) + '" target="_blank">' + item.city + '</a></td>';
+        row += '<td>' + item.title + '</td>';
+        row += '<td>' + item.review + '</td>';
+
+        row += '</tr>';
+        tableBody.append(row);
+    });
+});
+    </script>
+</body>
+</html>
