@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Closest Cities Finder</title>
+    <title>Zhen Zhen 5</title>
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
 </head>
 <body>
-    <h1 style="text-align: center;"> Zhen Zhen 5975 & Wang Yan </h1>
-    <h1 style="text-align: center">Closest Cities Finder</h1>
+    <h1 style="text-align: center;"> Zhen Zhen 5975 & Wang Yan 6044</h1>
+    <h1 style="text-align: center">Q10: Closest Cities Finder</h1>
 
     <label for="cityInput">City:</label>
     <input type="text" id="cityInput" placeholder="Enter city name">
@@ -25,7 +25,7 @@
     <div id="results"></div>
     <div id="time"></div>
 
-    <h1 style="text-align: center">KNN Reviews Analysis</h1>
+    <h1 style="text-align: center">Q11:KNN Reviews Analysis</h1>
 
     <label for="classesInput">Number of Classes:</label>
     <input type="number" id="classesInput" value="6">
@@ -36,11 +36,29 @@
     <label for="wordsInput">Words Limit:</label>
     <input type="number" id="wordsInput" value="100">
 
-    <button onclick="analyzeReviews()">Analyze Reviews</button>
+    <button id="btn-popular_v1" onclick="analyzeReviews()">Analyze Reviews</button>
     <button onclick="flushCache()">Flush Cache</button>
 
-    <div id="results"></div>
-    <div id="time"></div>
+    <div id="data">
+
+    </div>
+
 </body>
-<script src="{{ url_for('static', filename='app.js') }}"></script>
+<script src="{{ url_for('static', filename='app.js') }}">
+    $('document').ready(
+    function(){
+        $('#btn-popular_v1').click(function() {
+            $.ajax({
+                type: "GET",
+                url: "/data/knn_reviews",
+                contentType: "application/json",
+                success: function(data) {
+                    $('#data').html(JSON.stringify(data))
+                }
+            })
+        });
+
+    }
+);
+</script>
 </html>

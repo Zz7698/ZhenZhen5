@@ -3,6 +3,16 @@ import math
 
 import re
 import time
+from collections import Counter
+import numpy as np
+import nltk
+nltk.download('stopwords')
+from nltk.corpus import stopwords
+
+from sklearn.cluster import KMeans
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics import pairwise_distances_argmin_min
+
 from KNN import knn_cluster_reviews
 from azure.cosmos import CosmosClient, PartitionKey
 from flask import Flask, render_template, request, jsonify
@@ -49,25 +59,13 @@ def calculate_time_of_computing():
     return int(time.time())
 
 
-def preprocess_text(text):
-    # Convert to lowercase
-    text = text.lower()
-
-    # Remove special characters and numbers
-    text = re.sub(r'[^a-zA-Z\s]', '', text)
+def load_stopwords():
 
     # Read stopwords from file
-    with open('static/stopwords.txt', 'r') as file:
-        stop_words = set(file.read().split())
+    with open('stopwords.txt', 'a+') as file:
+        stop_words_list = file.read().splitlines()
 
-    # Remove stopwords
-    tokens = text.split()
-    filtered_tokens = [token for token in tokens if token not in stop_words]
-
-    # Join the filtered tokens back to form the preprocessed text
-    preprocessed_text = ' '.join(filtered_tokens)
-
-    return preprocessed_text
+    return stop_words_list
 
 
 # Function to calculate Haversine distance
@@ -149,10 +147,10 @@ def closest_cities():
             'cache_hit': False,
         })
 
-
+'''
 @app.route('/data/knn_reviews', methods=['GET'])
-def knn_cluster_reviews():
-    try:
+def knn_reviews():
+
         classes = int(request.args.get('classes'))
         k = int(request.args.get('k'))
         words = int(request.args.get('words'))
@@ -171,9 +169,107 @@ def knn_cluster_reviews():
         }
 
         return jsonify(response_data)
+'''
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+
+@app.route('/data/knn_reviews', methods=['GET'])
+def knn_reviews():
+    classes = int(request.args.get('classes', 6))
+    k = int(request.args.get('k', 3))
+    words = int(request.args.get('words', 100))
+    start_time = time.time()  # 开始计时
+    cache_key = f"knn_reviews:{classes}:{k}:{words}"
+
+    if cache.exists(cache_key):
+        response = cache.get(cache_key)
+        result = json.loads(response)
+        total_time = (time.time() - start_time) * 1000
+        result['cache_hit'] = True
+        return jsonify(response = {
+            'total_time': total_time,
+            'clustering_results': result
+        })
+    else:
+
+        query = "SELECT TOP 10 * FROM c"
+
+        reviews = list(amazon_reviews_table.query_items(query=query, enable_cross_partition_query=True))
+
+        clustering_results = knn_clustering_and_text_processing(classes, k, words, reviews)
+        total_time = (time.time() - start_time) * 1000
+
+        response = {
+            'total_time': total_time,
+            'clustering_results': clustering_results,
+            'cache_hit': False
+        }
+        cache.set(cache_key, json.dumps(clustering_results))
+        return jsonify(response)
+
+    # cache.set(cache_key, json.dumps(result))
+
+    # return jsonify(result)
+
+
+def knn_clustering_and_text_processing(classes, k, words, reviews):
+
+    texts = [review['review'].lower() for review in reviews]
+    cities = [review['city'] for review in reviews]
+
+    stopwords_list = load_stopwords()
+    vectorizer = TfidfVectorizer(stop_words=stopwords_list)
+    tfidf_matrix = vectorizer.fit_transform(texts)
+
+    kmeans = KMeans(n_clusters=classes, random_state=42)
+    kmeans.fit(tfidf_matrix)
+
+    labels = kmeans.labels_
+
+    tf_counter = {}
+
+    for i, label in enumerate(labels):
+
+        if label not in tf_counter:
+            tf_counter[label] = Counter()
+
+        tf_counter[label] += Counter(texts[i].split())
+
+    popular_words_by_cluster = {}
+    for label in range(classes):
+        popular_words_by_cluster[label] = [
+            word for word, count in tf_counter[label].most_common(words)
+            if word not in stopwords.words('english')
+        ]
+
+    weighted_scores = np.zeros(classes)
+    population_counts = np.zeros(classes)
+    for i, review in enumerate(reviews):
+        label = labels[i]
+        score = float(review['score'])
+        population = len(texts[i].split())
+        weighted_scores[label] += score * population
+        population_counts[label] += population
+
+    weighted_average_scores = weighted_scores / population_counts
+
+    clustering_results = {}
+    for label in range(classes):
+        clustering_results[label] = {
+            'center_city': None,
+            'cities_list': [],
+            'popular_words': popular_words_by_cluster[label],
+            'weighted_average_score': weighted_average_scores[label]
+        }
+
+    centers = kmeans.cluster_centers_
+    closest, _ = pairwise_distances_argmin_min(centers, tfidf_matrix)
+    for i, center_index in enumerate(closest):
+        clustering_results[i]['center_city'] = cities[center_index]
+
+    for i, label in enumerate(labels):
+        clustering_results[label]['cities_list'].append(cities[i])
+
+    return clustering_results
 
 
 @app.route('/flush_cache', methods=['GET'])

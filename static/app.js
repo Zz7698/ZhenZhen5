@@ -32,7 +32,15 @@ function displayResults(data) {
     tableHtml += '</table>';
 
     resultsDiv.innerHTML = tableHtml;
-
-
-
 }
+
+function analyzeReviews() {
+    var classes = document.getElementById('classesInput').value;
+    var k = document.getElementById('kInput').value;
+    var words = document.getElementById('wordsInput').value;
+
+    $.get('/data/knn_reviews', { classes: classes, k: k, words: words }, function (data) {
+        displayResults(data);
+    });
+}
+
