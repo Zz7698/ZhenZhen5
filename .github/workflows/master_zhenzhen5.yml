@@ -66,4 +66,4 @@ jobs:
         with:
           app-name: 'zhenzhen5'
           slot-name: 'Production'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F9244A2B6F9347ADB6533ACEC74924BE }}
+          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B714150F79D4495AA71D83B2CD8C7847 }}
