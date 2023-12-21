@@ -36,7 +36,7 @@
     <label for="wordsInput">Words Limit:</label>
     <input type="number" id="wordsInput" value="100">
 
-    <button id="btn-popular_v1" onclick="analyzeReviews()">Analyze Reviews</button>
+    <button id="btn-popular_v1">Analyze Reviews</button>
     <button onclick="flushCache()">Flush Cache</button>
 
     <div id="data">
@@ -45,20 +45,6 @@
 
 </body>
 <script src="{{ url_for('static', filename='app.js') }}">
-    $('document').ready(
-    function(){
-        $('#btn-popular_v1').click(function() {
-            $.ajax({
-                type: "GET",
-                url: "/data/knn_reviews",
-                contentType: "application/json",
-                success: function(data) {
-                    $('#data').html(JSON.stringify(data))
-                }
-            })
-        });
 
-    }
-);
 </script>
 </html>

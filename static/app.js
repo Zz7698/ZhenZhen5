@@ -43,4 +43,19 @@ function analyzeReviews() {
         displayResults(data);
     });
 }
+$('document').ready(
+    function(){
+        $('#btn-popular_v1').click(function() {
+            var numberOfClasses = $('#classesInput').val();
+            var kValue = $('#kInput').val();
+            var wordsLimit = $('#wordsInput').val();
+            var queryParams = $.param({
+                classes: numberOfClasses,
+                k: kValue,
+                words: wordsLimit
+            });
+            window.location.href = "/data/knn_reviews?" + queryParams;
+        });
+    }
+);
 
