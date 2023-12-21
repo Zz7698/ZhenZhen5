@@ -191,7 +191,7 @@ def knn_reviews():
         })
     else:
 
-        query = "SELECT TOP 10 * FROM c"
+        query = "SELECT TOP 600 * FROM c"
 
         reviews = list(amazon_reviews_table.query_items(query=query, enable_cross_partition_query=True))
 
